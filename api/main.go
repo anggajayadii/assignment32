@@ -2,10 +2,8 @@ package handler
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 type User struct {
@@ -43,15 +41,4 @@ func setupRouter() *gin.Engine {
 func Handler(w http.ResponseWriter, r *http.Request) {
 	route := setupRouter()
 	route.ServeHTTP(w, r)
-}
-
-func main() {
-	_ = godotenv.Load()
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	r := setupRouter()
-	r.Run(":" + port)
 }
