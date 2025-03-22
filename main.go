@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"net/http"
@@ -12,19 +12,20 @@ var users = []map[string]interface{}{
 	{"id": 2, "name": "Jayadi Angga"},
 }
 
-func main() {
+// Handler adalah fungsi utama yang akan dipanggil oleh Vercel
+func Handler(w http.ResponseWriter, r *http.Request) {
 	// Inisialisasi router Gin
-	r := gin.Default()
+	router := gin.Default()
 
 	// Endpoint GET /api/users
-	r.GET("/api/users", func(c *gin.Context) {
+	router.GET("/api/users", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"data": users,
 		})
 	})
 
 	// Endpoint POST /api/users
-	r.POST("/api/users", func(c *gin.Context) {
+	router.POST("/api/users", func(c *gin.Context) {
 		var newUser map[string]interface{}
 
 		// Bind JSON body ke variabel newUser
@@ -44,6 +45,6 @@ func main() {
 		})
 	})
 
-	// Jalankan server di port 8080
-	r.Run()
+	// Jalankan router Gin sebagai handler
+	router.ServeHTTP(w, r)
 }
