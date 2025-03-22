@@ -2,49 +2,56 @@ package handler
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
-// Data dummy pengguna
-var users = []map[string]interface{}{
-	{"id": 1, "name": "Angga Jayadi"},
-	{"id": 2, "name": "Jayadi Angga"},
+type User struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
-// Handler adalah fungsi utama yang akan dipanggil oleh Vercel
+var users = []User{
+	{ID: 1, Name: "Angga"},
+	{ID: 2, Name: "Jayadi"},
+}
+
+func getUsers(c *gin.Context) {
+	c.JSON(http.StatusOK, users)
+}
+
+func createUser(c *gin.Context) {
+	var newUser User
+	if err := c.ShouldBindJSON(&newUser); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+	newUser.ID = len(users) + 1
+	users = append(users, newUser)
+	c.JSON(http.StatusCreated, newUser)
+}
+
+func setupRouter() *gin.Engine {
+	r := gin.Default()
+	r.GET("/api/users", getUsers)
+	r.POST("/api/users", createUser)
+	return r
+}
+
 func Handler(w http.ResponseWriter, r *http.Request) {
-	// Inisialisasi router Gin
-	router := gin.Default()
+	route := setupRouter()
+	route.ServeHTTP(w, r)
+}
 
-	// Endpoint GET /api/users
-	router.GET("/api/users", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"data": users,
-		})
-	})
+func main() {
+	_ = godotenv.Load()
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
-	// Endpoint POST /api/users
-	router.POST("/api/users", func(c *gin.Context) {
-		var newUser map[string]interface{}
-
-		// Bind JSON body ke variabel newUser
-		if err := c.ShouldBindJSON(&newUser); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid request body",
-			})
-			return
-		}
-
-		// Tambahkan pengguna baru ke slice users
-		users = append(users, newUser)
-
-		// Kembalikan respons dengan data pengguna yang baru ditambahkan
-		c.JSON(http.StatusCreated, gin.H{
-			"data": newUser,
-		})
-	})
-
-	// Jalankan router Gin sebagai handler
-	router.ServeHTTP(w, r)
+	r := setupRouter()
+	r.Run(":" + port)
 }
